@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,7 +35,8 @@ const CAPABILITIES = [
   'defi',
   'verification',
   'reputation',
-  'scoring'
+  'scoring',
+  'security'
 ];
 
 export function FilterPanel({ filters, onChange, className }: FilterPanelProps) {
@@ -161,21 +161,6 @@ export function FilterPanel({ filters, onChange, className }: FilterPanelProps) 
               </Badge>
             ))}
           </div>
-        </div>
-        
-        {/* Activity Level */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Activity Level</Label>
-          <select
-            value={filters.activityLevel}
-            onChange={(e) => updateFilter('activityLevel', e.target.value as FilterState['activityLevel'])}
-            className="w-full p-2 rounded-md border border-input bg-background text-sm"
-          >
-            <option value="all">All Levels</option>
-            <option value="high">High Activity</option>
-            <option value="medium">Medium Activity</option>
-            <option value="low">Low Activity</option>
-          </select>
         </div>
         
         {/* Featured Only */}

@@ -11,7 +11,10 @@ export interface Agent {
     perTransaction?: string;
   };
   network: string;
+  networks?: string[];
   endpoint?: string;
+  wallet?: string;
+  x402Support?: boolean;
   featured: boolean;
   registered: string;
   lastActive?: string;

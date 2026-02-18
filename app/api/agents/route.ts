@@ -33,7 +33,8 @@ const SAMPLE_AGENTS = [
     lastActive: '2026-02-17T22:00:00Z',
     trustScore: 95,
     feedbackCount: 234,
-    trustLevel: 'elite'
+    trustLevel: 'elite',
+    featured: true
   },
   {
     agentId: '17900',
@@ -48,7 +49,8 @@ const SAMPLE_AGENTS = [
     lastActive: '2026-02-17T21:45:00Z',
     trustScore: 92,
     feedbackCount: 189,
-    trustLevel: 'elite'
+    trustLevel: 'elite',
+    featured: true
   },
   {
     agentId: '17908',
@@ -63,7 +65,8 @@ const SAMPLE_AGENTS = [
     lastActive: '2026-02-17T22:00:00Z',
     trustScore: 98,
     feedbackCount: 412,
-    trustLevel: 'elite'
+    trustLevel: 'elite',
+    featured: true
   }
 ];
 
@@ -201,6 +204,7 @@ export async function GET(request: Request) {
           trustLevel: trustScore >= 90 ? 'elite' : trustScore >= 70 ? 'verified' : 'standard',
           registered: metadata?.registered || new Date().toISOString(),
           lastActive: metadata?.lastActive || null,
+          featured: trustScore >= 90, // Auto-mark high trust as featured
         };
 
         agents.push(agent);
@@ -218,7 +222,8 @@ export async function GET(request: Request) {
         // Add some variety to trust scores
         trustScore: agent.trustScore - Math.floor(Math.random() * 10),
         feedbackCount: agent.feedbackCount - Math.floor(Math.random() * 20),
-        networks: [chain]
+        networks: [chain],
+        featured: agent.trustScore >= 90
       }));
       
       fallbackData.sort((a, b) => b.trustScore - a.trustScore);

@@ -1,35 +1,36 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Agent, AgentsResponse, AgentDetailResponse, FilterState } from '@/lib/types/agent';
-import { getAgents, getFeaturedAgents, getAgentDetail, searchAgents, fallbackAgents } from '@/lib/api';
+import { Agent } from '@/lib/types/agent';
+import { getAgents, getFeaturedAgents, fallbackAgents } from '@/lib/api';
 
-export function useAgents(initialFilters?: FilterState) {
+export function useAgents() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<FilterState | undefined>(initialFilters);
+  const [source, setSource] = useState<string | undefined>();
 
   const fetchAgents = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getAgents(filters);
-      setAgents(data.agents as Agent[]);
+      const data = await getAgents();
+      setAgents(data.agents || []);
+      setSource(data.source);
     } catch (err) {
-      console.warn('Using fallback agents data');
+      console.warn('Using fallback agents data:', err);
       setAgents(fallbackAgents);
       setError('Using cached data - API temporarily unavailable');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
     fetchAgents();
   }, [fetchAgents]);
 
-  return { agents, loading, error, filters, setFilters, refetch: fetchAgents };
+  return { agents, loading, error, source, refetch: fetchAgents };
 }
 
 export function useFeaturedAgents() {
@@ -41,7 +42,7 @@ export function useFeaturedAgents() {
     async function fetch() {
       try {
         const data = await getFeaturedAgents();
-        setAgents(data.agents as Agent[]);
+        setAgents(data);
       } catch (err) {
         setAgents(fallbackAgents.filter(a => a.featured));
         setError('Using cached data');
@@ -56,7 +57,7 @@ export function useFeaturedAgents() {
 }
 
 export function useAgentDetail(agentId: string) {
-  const [data, setData] = useState<AgentDetailResponse | null>(null);
+  const [data, setData] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,26 +65,11 @@ export function useAgentDetail(agentId: string) {
     async function fetch() {
       setLoading(true);
       try {
-        const result = await getAgentDetail(agentId);
-        setData(result);
+        // For now, use fallback data since we don't have detail API
+        const agent = fallbackAgents.find(a => a.agentId === agentId);
+        setData(agent || null);
       } catch (err) {
-        const fallback = fallbackAgents.find(a => a.agentId === agentId);
-        if (fallback) {
-          setData({
-            agent: fallback,
-            trustHistory: [],
-            feedback: [],
-            stats: {
-              totalTransactions: fallback.totalTransactions || 0,
-              successfulTransactions: fallback.successfulTransactions || 0,
-              failedTransactions: 0,
-              uptimePercentage: 99.9,
-              averageResponseTime: fallback.averageResponseTime || 0,
-              uniqueUsers: 100
-            }
-          });
-        }
-        setError('Using cached data');
+        setError('Failed to fetch agent details');
       } finally {
         setLoading(false);
       }
@@ -104,15 +90,15 @@ export function useSearch() {
       if (query.length >= 2) {
         setLoading(true);
         try {
-          const data = await searchAgents(query);
-          setResults(data.agents as Agent[]);
-        } catch {
-          const filtered = fallbackAgents.filter(a => 
+          const data = await getAgents();
+          const filtered = (data.agents || []).filter(a => 
             a.name.toLowerCase().includes(query.toLowerCase()) ||
             a.description.toLowerCase().includes(query.toLowerCase()) ||
             a.capabilities.some(c => c.toLowerCase().includes(query.toLowerCase()))
           );
           setResults(filtered);
+        } catch {
+          setResults([]);
         } finally {
           setLoading(false);
         }

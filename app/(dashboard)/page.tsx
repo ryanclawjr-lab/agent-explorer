@@ -23,7 +23,7 @@ export default function DashboardPage() {
     activityLevel: 'all'
   });
 
-  const { agents, loading, error, refetch } = useAgents(filters);
+  const { agents, loading, error, refetch, source } = useAgents();
   const { agents: featuredAgents, loading: featuredLoading } = useFeaturedAgents();
   const { selectedIds, toggleAgent, clearSelection, canCompare } = useComparison();
 

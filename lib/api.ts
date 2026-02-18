@@ -1,74 +1,51 @@
-import { Agent, AgentsResponse, AgentDetailResponse, FilterState } from '@/lib/types/agent';
+import { Agent } from '@/lib/types/agent';
 
-const API_BASE = 'https://dataoracle-xutu.onrender.com/api/v1';
+const API_BASE = '/api';
 
-export async function getAgents(filters?: FilterState): Promise<AgentsResponse> {
-  const params = new URLSearchParams();
-  
-  if (filters?.search) params.set('q', filters.search);
-  if (filters?.trustScoreRange) {
-    params.set('minTrust', filters.trustScoreRange[0].toString());
-    params.set('maxTrust', filters.trustScoreRange[1].toString());
-  }
-  if (filters?.networks?.length) params.set('networks', filters.networks.join(','));
-  if (filters?.capabilities?.length) params.set('capabilities', filters.capabilities.join(','));
-  if (filters?.featuredOnly) params.set('featured', 'true');
-  if (filters?.activityLevel && filters.activityLevel !== 'all') {
-    params.set('activity', filters.activityLevel);
-  }
-  
-  const url = `${API_BASE}/discovery/agents${params.toString() ? '?' + params.toString() : ''}`;
-  const res = await fetch(url, { next: { revalidate: 30 } });
-  
+export async function getAgents(): Promise<{ agents: Agent[]; source?: string }> {
+  const res = await fetch(`${API_BASE}/agents?chain=base-sepolia`, { 
+    next: { revalidate: 60 } 
+  });
   if (!res.ok) throw new Error('Failed to fetch agents');
   return res.json();
 }
 
-export async function searchAgents(query: string): Promise<AgentsResponse> {
-  const res = await fetch(`${API_BASE}/discovery/agents/search?q=${encodeURIComponent(query)}`, {
-    next: { revalidate: 30 }
+export async function searchAgents(query: string): Promise<Agent[]> {
+  const res = await fetch(`${API_BASE}/agents?chain=base-sepolia&q=${encodeURIComponent(query)}`, {
+    next: { revalidate: 60 }
   });
   if (!res.ok) throw new Error('Failed to search agents');
-  return res.json();
+  const data = await res.json();
+  return data.agents || [];
 }
 
-export async function getFeaturedAgents(): Promise<AgentsResponse> {
-  const res = await fetch(`${API_BASE}/discovery/featured`, {
+export async function getFeaturedAgents(): Promise<Agent[]> {
+  const res = await fetch(`${API_BASE}/agents?chain=base-sepolia&featured=true`, {
     next: { revalidate: 60 }
   });
   if (!res.ok) throw new Error('Failed to fetch featured agents');
-  return res.json();
+  const data = await res.json();
+  // Return top 6 by trust score
+  return (data.agents || []).slice(0, 6);
 }
 
-export async function getAgentDetail(agentId: string): Promise<AgentDetailResponse> {
-  const res = await fetch(`${API_BASE}/discovery/agents/${agentId}`, {
+export async function getAgentDetail(agentId: string): Promise<Agent | null> {
+  const res = await fetch(`${API_BASE}/agents/${agentId}`, {
     next: { revalidate: 30 }
   });
-  if (!res.ok) throw new Error('Failed to fetch agent details');
+  if (!res.ok) return null;
   return res.json();
 }
 
 export async function compareAgents(agentIds: string[]): Promise<Agent[]> {
-  const params = new URLSearchParams();
-  agentIds.forEach(id => params.append('ids', id));
-  
-  const res = await fetch(`${API_BASE}/discovery/compare?${params.toString()}`, {
+  const res = await fetch(`${API_BASE}/agents/compare?ids=${agentIds.join(',')}`, {
     next: { revalidate: 30 }
   });
   if (!res.ok) throw new Error('Failed to compare agents');
   return res.json();
 }
 
-export async function getRecommendedAgents(userContext?: string): Promise<AgentsResponse> {
-  const params = userContext ? `?context=${encodeURIComponent(userContext)}` : '';
-  const res = await fetch(`${API_BASE}/discovery/recommended${params}`, {
-    next: { revalidate: 60 }
-  });
-  if (!res.ok) throw new Error('Failed to fetch recommended agents');
-  return res.json();
-}
-
-// Fallback data for when API is unavailable
+// Fallback sample data (only used if API completely fails)
 export const fallbackAgents: Agent[] = [
   {
     agentId: "17899",

@@ -200,13 +200,16 @@ export async function GET(request: Request) {
       }
     }
 
-    // If no agents fetched on-chain, use sample data with scores
-    if (agents.length === 0) {
-      const fallbackData = SAMPLE_AGENTS.map(agent => ({
+    // If no agents fetched on-chain or total supply is very low, use sample data with scores
+    // This happens when contracts exist but no agents registered yet
+    if (agents.length === 0 || Number(totalSupply) < 10) {
+      console.log('Using sample data - low agent count:', totalSupply);
+      const fallbackData = SAMPLE_AGENTS.map((agent, idx) => ({
         ...agent,
-        trustScore: Math.floor(Math.random() * 40) + 60,
-        feedbackCount: Math.floor(Math.random() * 50) + 5,
-        trustLevel: agent.trustScore >= 90 ? 'elite' : 'verified'
+        // Add some variety to trust scores
+        trustScore: agent.trustScore - Math.floor(Math.random() * 10),
+        feedbackCount: agent.feedbackCount - Math.floor(Math.random() * 20),
+        networks: [chain]
       }));
       
       fallbackData.sort((a, b) => b.trustScore - a.trustScore);

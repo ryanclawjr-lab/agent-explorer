@@ -69,8 +69,17 @@ const SAMPLE_AGENTS = [
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const chain = (searchParams.get('chain') || 'base-sepolia') as keyof typeof CONTRACTS;
+  const chainParam = searchParams.get('chain') || 'base-sepolia';
   const forceRefresh = searchParams.get('refresh') === 'true';
+
+  // Validate chain parameter
+  const ALLOWED_CHAINS = ['base-sepolia', 'base'];
+  const chain = ALLOWED_CHAINS.includes(chainParam) ? chainParam as keyof typeof CONTRACTS : 'base-sepolia';
+
+  // Validate forceRefresh is boolean
+  if (searchParams.get('refresh') !== null && searchParams.get('refresh') !== 'true' && searchParams.get('refresh') !== 'false') {
+    return NextResponse.json({ error: 'Invalid refresh parameter' }, { status: 400 });
+  }
 
   try {
     // Check cache

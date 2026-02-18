@@ -1,16 +1,43 @@
 import { NextResponse } from 'next/server';
 import { getAgents } from '@/lib/api';
 
+// Input sanitization helpers
+function sanitizeString(str: string): string {
+  // Remove any potential injection characters, limit length
+  return str.replace(/[<>\"'%;()&+]/g, '').slice(0, 100);
+}
+
+function sanitizeNumber(value: string, min: number, max: number, defaultVal: number): number {
+  const num = parseInt(value, 10);
+  if (isNaN(num)) return defaultVal;
+  return Math.min(max, Math.max(min, num));
+}
+
+function sanitizeArray(arr: string[]): string[] {
+  return arr.map(sanitizeString).filter(Boolean).slice(0, 10);
+}
+
+const ALLOWED_SORTS = ['trust-desc', 'trust-asc', 'name-asc', 'name-desc', 'feedback-desc'];
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q')?.toLowerCase() || '';
-  const capabilities = searchParams.get('capabilities')?.split(',').filter(Boolean) || [];
-  const minTrust = parseInt(searchParams.get('minTrust') || '0');
-  const maxTrust = parseInt(searchParams.get('maxTrust') || '100');
+  
+  // Sanitize all inputs
+  const query = sanitizeString(searchParams.get('q') || '');
+  const capabilities = sanitizeArray(searchParams.get('capabilities')?.split(',') || []);
+  const minTrust = sanitizeNumber(searchParams.get('minTrust') || '0', 0, 100, 0);
+  const maxTrust = sanitizeNumber(searchParams.get('maxTrust') || '100', 0, 100, 100);
   const x402Only = searchParams.get('x402') === 'true';
-  const network = searchParams.get('network') || '';
+  const network = sanitizeString(searchParams.get('network') || '');
   const featured = searchParams.get('featured') === 'true';
-  const sort = searchParams.get('sort') || 'trust-desc';
+  const sort = ALLOWED_SORTS.includes(searchParams.get('sort') || '') 
+    ? searchParams.get('sort') as typeof ALLOWED_SORTS[number]
+    : 'trust-desc';
+
+  // Validate range
+  if (minTrust > maxTrust) {
+    return NextResponse.json({ error: 'Invalid trust range', agents: [], count: 0 }, { status: 400 });
+  }
 
   try {
     const { agents } = await getAgents();

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "ERC-8004 Agent Directory - Explore AI agents with reputation scores",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

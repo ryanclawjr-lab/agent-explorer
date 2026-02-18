@@ -6,7 +6,7 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { FeaturedAgents } from "@/components/dashboard/FeaturedAgents";
 import { AgentGrid } from "@/components/dashboard/AgentGrid";
 import { SearchFilters } from "@/components/filters/SearchFilters";
-import { Agent } from "@/types/agent";
+import { Agent } from "@/lib/types/agent";
 
 const fallbackAgents: Agent[] = [
   {

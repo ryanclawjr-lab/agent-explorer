@@ -34,7 +34,7 @@ function StatCard({ label, value, subtext, icon, color, tooltip }: StatCardProps
                   {icon}
                 </div>
                 {tooltip && (
-                  㲺dge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs">
                     <Info className="w-3 h-3" />
                   </Badge>
                 )}

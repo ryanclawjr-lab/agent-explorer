@@ -1,4 +1,4 @@
-import { Agent } from '@/types/agent'
+import { Agent } from '@/lib/types/agent'
 import { Star } from 'lucide-react'
 
 interface FeaturedAgentsProps {

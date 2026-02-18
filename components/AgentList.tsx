@@ -1,4 +1,4 @@
-import { Agent } from '@/types/agent'
+import { Agent } from '@/lib/types/agent'
 import { Shield, Zap, Globe } from 'lucide-react'
 
 interface AgentListProps {

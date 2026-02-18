@@ -1,4 +1,4 @@
-import { Agent } from "@/types/agent";
+import { Agent } from "@/lib/types/agent";
 import { Card } from "@/components/ui/card";
 import { TrustBadge } from "./TrustBadge";
 import { Star, ExternalLink, Zap } from "lucide-react";

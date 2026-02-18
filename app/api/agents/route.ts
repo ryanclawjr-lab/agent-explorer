@@ -4,6 +4,12 @@ import { baseSepolia, base } from 'viem/chains';
 import { IDENTITY_REGISTRY_ABI, REPUTATION_REGISTRY_ABI, CONTRACTS } from '@/lib/contracts/erc8004';
 import { resolveIPFS, getAgentData } from '@/lib/ipfs';
 
+// Public RPC URLs (no API key needed for read calls)
+const PUBLIC_RPC_URLS = {
+  'base-sepolia': 'https://sepolia.base.org',
+  'base': 'https://mainnet.base.org'
+};
+
 // In-memory cache for agents list
 let agentsCache: {
   data: any[];
@@ -81,10 +87,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: `Unsupported chain: ${chain}` }, { status: 400 });
     }
 
-    // Create viem client
+    // Create viem client with public RPC
+    const rpcUrl = PUBLIC_RPC_URLS[chain] || PUBLIC_RPC_URLS['base-sepolia'];
     const client = createPublicClient({
       chain: chain === 'base-sepolia' ? baseSepolia : base,
-      transport: http()
+      transport: http(rpcUrl)
     });
 
     // Fetch total supply
@@ -95,8 +102,9 @@ export async function GET(request: Request) {
         abi: IDENTITY_REGISTRY_ABI,
         functionName: 'totalSupply',
       });
+      console.log(`Total supply on ${chain}:`, totalSupply);
     } catch (e) {
-      console.log('Contract read failed, using sample data');
+      console.log('Contract read failed, using sample data:', e);
       totalSupply = BigInt(SAMPLE_AGENTS.length);
     }
 
@@ -117,7 +125,14 @@ export async function GET(request: Request) {
             functionName: 'tokenURI',
             args: [agentId],
           });
+          // Ensure it's a valid URI string (not a number)
           tokenURI = String(uriResult || '');
+          
+          // Skip if not a valid URI format
+          if (tokenURI && !tokenURI.startsWith('http') && !tokenURI.startsWith('ipfs') && !tokenURI.startsWith('data:')) {
+            console.log(`Agent ${agentId}: tokenURI is not a valid URI format: ${tokenURI}`);
+            tokenURI = '';
+          }
         } catch (e) {
           // Token might not exist
           continue;
